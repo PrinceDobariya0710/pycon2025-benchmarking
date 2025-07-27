@@ -1,0 +1,7 @@
+fastapi[standard]
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+python-dotenv
+jinja2
+uvloop

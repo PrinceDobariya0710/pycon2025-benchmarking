@@ -8,8 +8,12 @@ import statistics
 import json
 from pathlib import Path
 import psycopg2
+from python_on_whales import DockerClient
+from dotenv import load_dotenv
 
+load_dotenv(".env")
 # === CONFIGURATION ===
+docker = DockerClient(compose_files=["docker-compose.yml"])
 
 # Path to CSV with product data (assumes mounted in Docker or present locally)
 DATA_PATH = Path("data/products.csv")
@@ -21,6 +25,9 @@ FRAMEWORKS = json.loads(
 )  # Example: {"FastAPI": "http://fastapi:8000"}
 CONCURRENCY = int(os.getenv("CONCURRENCY", 100))
 TOTAL_REQUESTS = int(os.getenv("TOTAL_REQUESTS", 500))
+
+FRAMEWORK_SERVICES = ["flask", "django", "fastapi", "fastapi-sync", "express", "gin"]
+DB_SERVICE = "db"
 
 
 # === LOAD PRODUCTS FROM CSV ===
@@ -213,8 +220,8 @@ def seed_database_postgres(products):
         host=os.getenv("POSTGRES_HOST", "localhost"),
         port=os.getenv("POSTGRES_PORT", 5432),
         user=os.getenv("POSTGRES_USER", "postgres"),
-        password=os.getenv("POSTGRES_PASSWORD", "postgres"),
-        dbname=os.getenv("POSTGRES_DB", "postgres"),
+        password=os.getenv("POSTGRES_PASSWORD", "root"),
+        dbname=os.getenv("POSTGRES_DB", "benchmark_db"),
     )
     cur = conn.cursor()
     try:
@@ -273,6 +280,24 @@ def seed_database_postgres(products):
         conn.close()
 
 
+def stop_and_remove_all_services():
+    print("Stopping all running containers...")
+    docker.compose.down(remove_orphans=True, volumes=False)
+
+
+def start_service(service):
+    print(f"Starting {service} container...")
+    docker.compose.up(detach=True, services=[service])
+    # Optionally, wait for the service to be ready
+    time.sleep(5)  # Replace with health check if needed
+
+
+def stop_and_remove_service(service):
+    print(f"Stopping and removing {service} container...")
+    docker.compose.stop(services=[service])
+    docker.compose.rm(services=[service])
+
+
 # === MAIN RUNNER ===
 
 
@@ -280,6 +305,11 @@ async def main():
     products = load_products()
     seeded = seed_database_postgres(products)
     results = []
+
+    # Start only the DB container first
+    print("\n=== Starting DB container ===")
+    # docker.compose.up(detach=True, services=[DB_SERVICE])
+    time.sleep(5)  # Wait for DB to be ready
 
     # Split test cases by DB requirement
     non_db_cases = [
@@ -295,7 +325,16 @@ async def main():
     ]
     delete_case = next(c for c in TEST_CASES if c["name"] == "Delete Product")
 
-    for framework, base_url in FRAMEWORKS.items():
+    stop_and_remove_all_services()  # Ensure clean state before starting
+
+    for service in FRAMEWORK_SERVICES:
+        start_service(service)
+        framework = service.capitalize() if service != "express" else "Express"
+        base_url = FRAMEWORKS.get(framework)
+        if not base_url:
+            print(f"⚠️ Skipping {framework}: No base URL configured.")
+            stop_and_remove_service(service)
+            continue
         async with httpx.AsyncClient() as client:
             # 1. Run non-DB tests (PlainText, JSON Echo, Create Product)
             for case in non_db_cases:
@@ -307,6 +346,7 @@ async def main():
             seeded = seed_database_postgres(products)
             if not seeded:
                 print(f"⚠️ Skipping DB-dependent tests for {framework} (seeding failed)")
+                stop_and_remove_service(service)
                 continue
 
             # 3. Run DB-dependent tests (Get, List, Update, Fortune 100)
@@ -320,8 +360,12 @@ async def main():
             if result:
                 results.append(result)
 
-            # 5. Optionally re-seed DB for consistency (uncomment if needed)
-            # seed_database_postgres(products)
+        stop_and_remove_service(service)
+        time.sleep(2)  # Small delay between containers
+
+    # Optionally stop DB at the end
+    # docker.compose.stop(services=[DB_SERVICE])
+    # docker.compose.rm(services=[DB_SERVICE], force=True)
 
     if results:
         OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
