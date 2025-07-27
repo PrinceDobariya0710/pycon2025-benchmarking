@@ -1,0 +1,6 @@
+flask
+flask_sqlalchemy
+psycopg2-binary
+python-dotenv
+ujson
+gunicorn==23.0.0

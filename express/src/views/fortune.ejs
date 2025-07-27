@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Top 100 Products</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1 { color: #2c3e50; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 0.7em; }
+        .product-title { font-weight: bold; font-size: 1.1em; }
+        .product-label { color: #888; font-size: 0.95em; margin-right: 0.3em; }
+        .product-value { color: #222; }
+        .product-fields { margin-top: 0.3em; }
+    </style>
+</head>
+<body>
+    <h1>Top 100 Products</h1>
+    <ul>
+    <% products.forEach(function(p) { %>
+        <li>
+            <span class="product-title"><%= p.name %></span>
+            <div class="product-fields">
+                <span class="product-label">Description:</span> <span class="product-value"><%= p.description %></span><br>
+                <span class="product-label">Brand:</span> <span class="product-value"><%= p.brand %></span><br>
+                <span class="product-label">Category:</span> <span class="product-value"><%= p.category %></span><br>
+                <span class="product-label">Price:</span> <span class="product-value"><%= p.price %></span><br>
+                <span class="product-label">Currency:</span> <span class="product-value"><%= p.currency %></span><br>
+                <span class="product-label">Stock:</span> <span class="product-value"><%= p.stock %></span><br>
+                <span class="product-label">EAN:</span> <span class="product-value"><%= p.ean %></span><br>
+                <span class="product-label">Color:</span> <span class="product-value"><%= p.color %></span><br>
+                <span class="product-label">Size:</span> <span class="product-value"><%= p.size %></span><br>
+                <span class="product-label">Availability:</span> <span class="product-value"><%= p.availability %></span><br>
+                <span class="product-label">Internal ID:</span> <span class="product-value"><%= p.internal_id %></span>
+            </div>
+        </li>
+    <% }); %>
+    </ul>
+</body>
+</html>

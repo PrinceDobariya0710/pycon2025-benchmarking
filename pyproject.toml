@@ -1,0 +1,22 @@
+[project]
+name = "pycon2025-benchmarking"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "django>=5.2.4",
+    "djangorestframework>=3.16.0",
+    "fastapi[standard]>=0.116.1",
+    "flask>=3.1.1",
+    "flask-sqlalchemy>=3.1.1",
+    "gunicorn>=23.0.0",
+    "httpx>=0.28.1",
+    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
+    "python-dotenv>=1.1.1",
+    "sqlalchemy>=2.0.41",
+    "ujson>=5.10.0",
+    "uvicorn[standard]>=0.35.0",
+]

@@ -1,0 +1,5 @@
+fastapi[standard]>=0.116.1
+uvicorn[standard]
+sqlalchemy>=2.0.14
+asyncpg
+ujson
