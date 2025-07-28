@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 
 load_dotenv(".env")
 # === CONFIGURATION ===
-docker = DockerClient(compose_files=["docker-compose.yml"])
+DOCKER_COMPOSE_FILE = os.getenv("DOCKER_COMPOSE_FILE")
+docker = DockerClient(compose_files=[DOCKER_COMPOSE_FILE])
 
 # Path to CSV with product data (assumes mounted in Docker or present locally)
 DATA_PATH = Path("data/products.csv")

@@ -36,15 +36,5 @@ This project benchmarks various web frameworks (FastAPI, Django, Flask, Gin, Exp
 
 ## ⚙️ How to Preload Database
 
-There are two main options to preload your PostgreSQL database:
-
 ### 1. Python Seeding Script (Recommended)
 Use the provided script to read from `products.csv` and insert into DB using each framework’s ORM.
-
-### 2. PostgreSQL COPY Command
-You can also mount your CSV into the PostgreSQL container and use SQL to seed:
-
-```sql
-COPY product(title, description)
-FROM '/data/products.csv'
-DELIMITER ',' CSV HEADER;
