@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 # PlainText endpoint
 @api_view(["GET"])
 def plain_text(request):
-    return Response("Hello, world!", content_type="text/plain")
+    return Response("Hello, world!")
 
 
 # JSON Echo endpoint

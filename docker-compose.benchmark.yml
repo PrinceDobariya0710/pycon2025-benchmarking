@@ -1,54 +1,70 @@
-version: '3.9'
 services:
   flask:
     build: ./flask
     env_file:
       - .docker.env
+    environment:
+      - POSTGRES_HOST=db
     ports:
       - "8001:8001"
     depends_on:
       - db
+
   django:
     build: ./django
     env_file:
       - .docker.env
+    environment:
+      - POSTGRES_HOST=db
     ports:
       - "8002:8002"
     depends_on:
       - db
+
   fastapi:
     build: ./fastapi
     env_file:
       - .docker.env
+    environment:
+      - POSTGRES_HOST=db
     ports:
       - "8003:8003"
     depends_on:
       - db
+
   fastapi-sync:
     build: ./fastapi-sync
-    # Note: This service is for synchronous FastAPI, ensure the Dockerfile is set up
     env_file:
       - .docker.env
+    environment:
+      - POSTGRES_HOST=db
     ports:
       - "8004:8004"
     depends_on:
       - db
+
   express:
     build: ./express
     env_file:
       - .docker.env
+    environment:
+      - POSTGRES_HOST=db
     ports:
       - "3000:3000"
     depends_on:
       - db
+
   gin:
     build: ./gin
     env_file:
       - .docker.env
+    environment:
+      - POSTGRES_HOST=db
     ports:
       - "8080:8080"
     depends_on:
       - db
+
   db:
     image: postgres:15
     restart: always
@@ -60,5 +76,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
 volumes:
   pgdata:

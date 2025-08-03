@@ -4,3 +4,4 @@ sqlalchemy>=2.0.14
 asyncpg
 ujson
 uvloop
+jinja2
