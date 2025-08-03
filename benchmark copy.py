@@ -25,7 +25,7 @@ FRAMEWORKS = json.loads(
     os.getenv("FRAMEWORKS_JSON", "{}")
 )  # Example: {"FastAPI": "http://fastapi:8000"}
 CONCURRENCY = int(os.getenv("CONCURRENCY", 100))
-DURATION_SECONDS = int(os.getenv("DURATION_SECONDS", 10))
+TOTAL_REQUESTS = int(os.getenv("TOTAL_REQUESTS", 500))
 
 FRAMEWORK_SERVICES = ["flask", "django", "fastapi", "fastapi-sync", "express", "gin"]
 DB_SERVICE = "db"
@@ -94,39 +94,21 @@ TEST_CASES = [
 
 async def make_request(client, method, url, payload=None):
     start = time.time()
-    # The try/except block is removed from here and handled in the worker
-    # to ensure that connection errors don't create a fast, blocking loop.
-    if method == "GET":
-        res = await client.get(url)
-    elif method == "POST":
-        res = await client.post(url, json=payload)
-    elif method == "PUT":
-        res = await client.put(url, json=payload)
-    elif method == "DELETE":
-        res = await client.delete(url)
-    else:
+    try:
+        if method == "GET":
+            res = await client.get(url)
+        elif method == "POST":
+            res = await client.post(url, json=payload)
+        elif method == "PUT":
+            res = await client.put(url, json=payload)
+        elif method == "DELETE":
+            res = await client.delete(url)
+        else:
+            return -1, 0
+        duration = (time.time() - start) * 1000  # in milliseconds
+        return duration, res.status_code
+    except Exception:
         return -1, 0
-    duration = (time.time() - start) * 1000  # in milliseconds
-    return duration, res.status_code
-
-
-async def wait_for_service_ready(client, base_url):
-    """Polls a simple endpoint to ensure the service is ready before benchmarking."""
-    print(f"Waiting for {base_url} to be ready...")
-    start_time = time.time()
-    while time.time() - start_time < 30:  # 30-second timeout
-        try:
-            # Use a simple, non-DB endpoint for the health check
-            response = await client.get(base_url + "/plain-text")
-            if response.status_code == 200:
-                print(f"✅ Service at {base_url} is ready.")
-                return True
-        except httpx.RequestError:
-            # Ignore connection errors, timeouts, etc. while waiting
-            pass
-        await asyncio.sleep(1)
-    print(f"❌ Service at {base_url} did not become ready in time.")
-    return False
 
 
 # Helper: add trailing slash for Django endpoints
@@ -137,85 +119,72 @@ def add_trailing_slash_if_django(framework, path):
     return path
 
 
-def prepare_request_params(framework, base_url, case, products):
-    """Helper to prepare URL, method, and payload for a request."""
-    path = case["path"]
-    method = case["method"]
-    payload = None
-
-    if case["name"] == "PlainText":
-        path = "/plain-text"
-        method = "GET"
-    elif case["name"] == "JSON Echo":
-        path = "/json"
-        method = "GET"
-    elif case["name"] == "Create Product":
-        payload = random.choice(products)
-    elif "{id}" in path:
-        # Use a wide range for random IDs. In a real scenario, you might want to
-        # ensure the ID exists, but for load testing, this is acceptable.
-        product_id = random.randint(1, 10000)
-        path = path.replace("{id}", str(product_id))
-        if case["name"] == "Update Product":
-            payload = {"name": f"Updated Product {random.randint(1, 10000)}"}
-
-    url = base_url + add_trailing_slash_if_django(framework, path)
-    return method, url, payload
-
-
 # === BENCHMARK SINGLE TEST CASE ===
-async def run_test_case(framework, base_url, case, products, duration_seconds, client):
-    print(
-        f"🔄 Running {case['name']} for {framework} for {duration_seconds}s with {CONCURRENCY} concurrency"
-    )
+async def run_test_case(framework, base_url, case, products):
+    print(f"🔄 Running {case['name']} for {framework}")
     durations = []
     status_codes = []
 
-    # The client is now passed in, not created here, to enable connection pooling.
-    async def worker():
-        """A worker that runs in a loop making requests until cancelled."""
-        while True:
-            try:
-                method, url, payload = prepare_request_params(
-                    framework, base_url, case, products
-                )
-                dur, status = await make_request(client, method, url, payload)
+    async with httpx.AsyncClient() as client:
+        sem = asyncio.Semaphore(CONCURRENCY)
+
+        async def bound_request(_):
+            async with sem:
+                # Use helper to add trailing slash for Django endpoints
+                url = base_url + add_trailing_slash_if_django(framework, case["path"])
+                payload = None
+                # Special handling for PlainText and JSON Echo
+                if case["name"] == "PlainText":
+                    dur, status = await make_request(
+                        client,
+                        "GET",
+                        base_url
+                        + add_trailing_slash_if_django(framework, "/plain-text"),
+                    )
+
+                elif case["name"] == "JSON Echo":
+                    dur, status = await make_request(
+                        client,
+                        "GET",
+                        base_url + add_trailing_slash_if_django(framework, "/json"),
+                    )
+
+                elif case["name"] == "Create Product":
+                    payload = random.choice(products)
+                    dur, status = await make_request(client, "POST", url, payload)
+
+                elif "{id}" in case["path"]:
+                    product_id = random.randint(1, len(products))
+                    url = base_url + add_trailing_slash_if_django(
+                        framework, case["path"].replace("{id}", str(product_id))
+                    )
+                    if case["payload"] == "dynamic":
+                        if case["name"] == "Update Product":
+                            payload = {"name": f"Updated {random.randint(1, 10000)}"}
+                else:
+                    if case["payload"] == "dynamic":
+                        if case["name"] == "Create Product":
+                            payload = random.choice(products)
+                    else:
+                        payload = case["payload"]
+
+                if case["name"] not in [
+                    "PlainText",
+                    "JSON Echo",
+                    "Create Product",
+                ] and not (case["name"] == "Create Product"):
+                    dur, status = await make_request(
+                        client, case["method"], url, payload
+                    )
                 if dur != -1:
                     durations.append(dur)
-                status_codes.append(status)
-            except asyncio.CancelledError:
-                # Task was cancelled, break the loop
-                break
-            except Exception:
-                # Log other exceptions as failed requests
-                status_codes.append(0)
-                # Add a small sleep to prevent a tight loop on persistent errors
-                # and allow the task to be cancelled.
-                try:
-                    await asyncio.sleep(0.01)
-                except asyncio.CancelledError:
-                    break
+                    status_codes.append(status)
 
-    # Start the workers
-    tasks = [asyncio.create_task(worker()) for _ in range(CONCURRENCY)]
+        tasks = [bound_request(i) for i in range(TOTAL_REQUESTS)]
+        await asyncio.gather(*tasks)
 
-    # Wait for the specified duration
-    await asyncio.sleep(duration_seconds)
-
-    # Cancel all worker tasks
-    for task in tasks:
-        task.cancel()
-
-    # Wait for all tasks to finish their cancellation
-    await asyncio.gather(*tasks, return_exceptions=True)
-
-    print(f"✅ Finished {case['name']} for {framework}")
-
-    if not durations or not statistics.mean(durations):
+    if not durations:
         return None
-
-    total_requests = len(status_codes)
-    success_count = sum(1 for s in status_codes if 200 <= s < 300)
 
     return {
         "framework": framework,
@@ -223,18 +192,15 @@ async def run_test_case(framework, base_url, case, products, duration_seconds, c
         "method": case["method"],
         "test_type": case["name"],
         "concurrency": CONCURRENCY,
-        "duration_seconds": duration_seconds,
-        "total_requests": total_requests,
+        "total_requests": TOTAL_REQUESTS,
         "avg_response_time_ms": round(statistics.mean(durations), 2),
         "p95_response_time_ms": round(statistics.quantiles(durations, n=100)[94], 2),
         "p99_response_time_ms": round(statistics.quantiles(durations, n=100)[98], 2),
-        "throughput_rps": round(total_requests / duration_seconds, 2),
-        "success_rate_percent": (
-            round((success_count / total_requests) * 100, 2)
-            if total_requests > 0
-            else 0
+        "throughput_rps": round(1000 * len(durations) / sum(durations), 2),
+        "success_rate_percent": round(
+            (sum(1 for s in status_codes if 200 <= s < 300) / TOTAL_REQUESTS) * 100, 2
         ),
-        "error_count": total_requests - success_count,
+        "error_count": TOTAL_REQUESTS - len(status_codes),
     }
 
 
@@ -330,7 +296,7 @@ def start_service(service):
 def stop_and_remove_service(service):
     print(f"Stopping and removing {service} container...")
     docker.compose.stop(services=[service])
-    docker.compose.rm(services=[service], force=True)
+    docker.compose.rm(services=[service])
 
 
 # === MAIN RUNNER ===
@@ -338,60 +304,69 @@ def stop_and_remove_service(service):
 
 async def main():
     products = load_products()
+    seeded = seed_database_postgres(products)
     results = []
 
     # Start only the DB container first
     print("\n=== Starting DB container ===")
     # docker.compose.up(detach=True, services=[DB_SERVICE])
-    time.sleep(10)  # Wait for DB to be ready
+    time.sleep(5)  # Wait for DB to be ready
 
-    # Seed database once before starting
-    seeded = seed_database_postgres(products)
-    if not seeded:
-        print("❌ Initial database seeding failed. Aborting benchmarks.")
-        docker.compose.down(remove_orphans=True, volumes=False)
-        return
+    # Split test cases by DB requirement
+    non_db_cases = [
+        c
+        for c in TEST_CASES
+        if c["name"] in ["PlainText", "JSON Echo", "Create Product"]
+    ]
+    db_cases = [
+        c
+        for c in TEST_CASES
+        if c["name"]
+        not in ["PlainText", "JSON Echo", "Create Product", "Delete Product"]
+    ]
+    delete_case = next(c for c in TEST_CASES if c["name"] == "Delete Product")
+
+    stop_and_remove_all_services()  # Ensure clean state before starting
 
     for service in FRAMEWORK_SERVICES:
         start_service(service)
-        # Map service name to framework name used in FRAMEWORKS dict
-        framework_name_map = {
-            "fastapi-sync": "FastAPI-Sync",
-            "express": "Express",
-            "gin": "Gin",
-            "flask": "Flask",
-            "django": "Django",
-            "fastapi": "FastAPI",
-        }
-        framework = framework_name_map.get(service, service.capitalize())
+        framework = service.capitalize() if service != "express" else "Express"
         base_url = FRAMEWORKS.get(framework)
-
         if not base_url:
             print(f"⚠️ Skipping {framework}: No base URL configured.")
             stop_and_remove_service(service)
             continue
+        async with httpx.AsyncClient() as client:
+            # 1. Run non-DB tests (PlainText, JSON Echo, Create Product)
+            for case in non_db_cases:
+                result = await run_test_case(framework, base_url, case, products)
+                if result:
+                    results.append(result)
 
-        # Create one client per framework to reuse connections
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            # Wait for the service to be healthy before starting the test
-            is_ready = await wait_for_service_ready(client, base_url)
-            if not is_ready:
-                print(f"⚠️ Skipping {framework} because it failed to start.")
+            # 2. Seed DB before DB-dependent tests (directly via psycopg2)
+            seeded = seed_database_postgres(products)
+            if not seeded:
+                print(f"⚠️ Skipping DB-dependent tests for {framework} (seeding failed)")
                 stop_and_remove_service(service)
                 continue
 
-            for case in TEST_CASES:
-                result = await run_test_case(
-                    framework, base_url, case, products, DURATION_SECONDS, client
-                )
+            # 3. Run DB-dependent tests (Get, List, Update, Fortune 100)
+            for case in db_cases:
+                result = await run_test_case(framework, base_url, case, products)
                 if result:
                     results.append(result)
+
+            # 4. Run Delete Product last
+            result = await run_test_case(framework, base_url, delete_case, products)
+            if result:
+                results.append(result)
 
         stop_and_remove_service(service)
         time.sleep(2)  # Small delay between containers
 
-    # Stop all containers at the end
-    stop_and_remove_all_services()
+    # Optionally stop DB at the end
+    # docker.compose.stop(services=[DB_SERVICE])
+    # docker.compose.rm(services=[DB_SERVICE], force=True)
 
     if results:
         OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

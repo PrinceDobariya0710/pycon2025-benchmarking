@@ -1,0 +1,4 @@
+python-on-whales
+psycopg2-binary
+python-dotenv
+httpx
