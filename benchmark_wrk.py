@@ -353,6 +353,9 @@ def main():
                         "test": case["name"],
                         "requests_per_sec": parsed.get("requests_per_sec"),
                         "avg_latency_ms": parsed.get("avg_latency_ms"),
+                        "total_requests": int(
+                            parsed.get("requests_per_sec") * int(DURATION)
+                        ),
                     }
                 )
 

@@ -1,19 +1,4 @@
-version: '3.9'
 services:
-  benchmarker:
-    build:
-      context: .
-      dockerfile: benchmark_runner/Dockerfile
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./results:/app/results
-      - ./data:/app/data
-      - ./docker-compose.benchmark.yml:/app/docker-compose.benchmark.yml
-    depends_on:
-      - db
-    env_file:
-      - .docker.env
-
   flask:
     build: ./flask
     env_file:
