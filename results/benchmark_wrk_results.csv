@@ -1,0 +1,9 @@
+framework,test,requests_per_sec,avg_latency_ms,total_requests
+django,PlainText,1280.98,7.75ms,76858
+django,JSON Echo,1305.31,7.62ms,78318
+django,Create Product,104.35,95.79ms,6261
+django,Get Product,120.16,83.05ms,7209
+django,List Products,1.92,1.09s,115
+django,Update Product,93.36,106.92ms,5601
+django,Fortune 100,50.4,197.99ms,3024
+django,Delete Product,117.33,85.03ms,7039
