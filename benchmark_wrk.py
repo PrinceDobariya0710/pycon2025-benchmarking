@@ -230,7 +230,7 @@ def run_wrk(url, duration, concurrency, threads, lua_script_path=None):
             output_str = str(output).strip()
 
         print("🔍 Raw output type:", type(output_str))
-        print("🔍 Raw output:", output_str[:200] if output_str else "No output")
+        print("🔍 Raw output:", output_str if output_str else "No output")
 
         if not output_str:
             print("⚠️ No output received from wrk")
