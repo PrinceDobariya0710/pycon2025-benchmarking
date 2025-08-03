@@ -12,7 +12,7 @@ import httpx
 from python_on_whales import DockerClient
 
 # Load environment variables
-load_dotenv(".env", override=True)
+load_dotenv(".docker.env", override=True)
 
 # --- CONFIGURATION ---
 DOCKER_COMPOSE_FILE = os.getenv("DOCKER_COMPOSE_FILE", "docker-compose.benchmark.yml")
@@ -121,7 +121,7 @@ def wait_for_service_ready(base_url):
 def seed_database_postgres(products):
     try:
         conn = psycopg2.connect(
-            host=os.getenv("POSTGRES_HOST", "localhost"),
+            host=os.getenv("POSTGRES_LOCALHOST", "localhost"),
             port=os.getenv("POSTGRES_PORT", 5432),
             user=os.getenv("POSTGRES_USER", "postgres"),
             password=os.getenv("POSTGRES_PASSWORD", "root"),
@@ -241,12 +241,6 @@ def run_wrk(url, duration, concurrency, threads, lua_script_path=None):
     except Exception as e:
         print(f"❌ Error running wrk: {str(e)}")
         return f"ERROR: {str(e)}"
-    finally:
-        try:
-            # Clean up
-            wrk_docker.remove(containers=["wrk_benchmark"])
-        except Exception as e:
-            print(f"⚠️ Warning: Error during cleanup: {str(e)}")
 
 
 def parse_wrk_output(output):
