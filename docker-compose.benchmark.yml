@@ -22,7 +22,7 @@ services:
       - db
 
   fastapi-uvicorn:
-    build: ./fastapi
+    build: ./fastapi-async
     command: "fastapi run main.py --host 0.0.0.0 --port 8003"
     env_file:
       - .docker.env
@@ -46,7 +46,7 @@ services:
       - db
 
   fastapi-gunicorn:
-    build: ./fastapi
+    build: ./fastapi-async
     command: "gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8003"
     env_file:
       - .docker.env

@@ -32,9 +32,9 @@ OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 FRAMEWORK_SERVICES = [
     "flask",
     "django",
-    "fastapi-uvicorn",
+    "fastapi-uvicorn-async",
     "fastapi-uvicorn-sync",
-    "fastapi-gunicorn",
+    "fastapi-gunicorn-async",
     "fastapi-gunicorn-sync",
     "express",
     "gin",
@@ -318,9 +318,9 @@ def main():
             "gin": "gin",
             "flask": "flask",
             "django": "django",
-            "fastapi-uvicorn": "fastapi-uvicorn",
+            "fastapi-uvicorn-async": "fastapi-uvicorn-async",
             "fastapi-uvicorn-sync": "fastapi-uvicorn-sync",
-            "fastapi-gunicorn": "fastapi-gunicorn",
+            "fastapi-gunicorn-async": "fastapi-gunicorn-async",
             "fastapi-gunicorn-sync": "fastapi-gunicorn-sync",
         }
         framework = framework_name_map.get(service, service.capitalize())
