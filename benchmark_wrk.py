@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import psycopg2
 import httpx
 from python_on_whales import DockerClient
+import datetime
 
 # Load environment variables
 load_dotenv(".docker.env", override=True)
@@ -26,7 +27,9 @@ DURATION = os.getenv("DURATION_SECONDS", "60")  # 1 minute per test for stable r
 CONCURRENCY = os.getenv("CONCURRENCY", "50")
 THREADS = os.getenv("THREADS", "2")
 DATA_PATH = Path("data/products.csv")
-OUTPUT_PATH = Path("results/benchmark_wrk_results_gunicorn_fastapi.csv")
+OUTPUT_PATH = Path(
+    f"results/benchmark_wrk_results_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+)
 OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 FRAMEWORK_SERVICES = [
