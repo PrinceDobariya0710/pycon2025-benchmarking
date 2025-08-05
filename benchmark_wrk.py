@@ -26,10 +26,19 @@ DURATION = os.getenv("DURATION_SECONDS", "60")  # 1 minute per test for stable r
 CONCURRENCY = os.getenv("CONCURRENCY", "50")
 THREADS = os.getenv("THREADS", "2")
 DATA_PATH = Path("data/products.csv")
-OUTPUT_PATH = Path("results/benchmark_wrk_results.csv")
+OUTPUT_PATH = Path("results/benchmark_wrk_results_gunicorn_fastapi.csv")
 OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-FRAMEWORK_SERVICES = ["flask", "django", "fastapi", "fastapi-sync", "express", "gin"]
+FRAMEWORK_SERVICES = [
+    "flask",
+    "django",
+    "fastapi-uvicorn",
+    "fastapi-uvicorn-sync",
+    "fastapi-gunicorn",
+    "fastapi-gunicorn-sync",
+    "express",
+    "gin",
+]
 DB_SERVICE = "db"
 
 # --- TEST CASES ---
@@ -305,12 +314,14 @@ def main():
         start_service(service)
 
         framework_name_map = {
-            "fastapi-sync": "fastapi-sync",
             "express": "express",
             "gin": "gin",
             "flask": "flask",
             "django": "django",
-            "fastapi": "fastapi",
+            "fastapi-uvicorn": "fastapi-uvicorn",
+            "fastapi-uvicorn-sync": "fastapi-uvicorn-sync",
+            "fastapi-gunicorn": "fastapi-gunicorn",
+            "fastapi-gunicorn-sync": "fastapi-gunicorn-sync",
         }
         framework = framework_name_map.get(service, service.capitalize())
         base_url = FRAMEWORKS.get(framework)
