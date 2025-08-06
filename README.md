@@ -25,13 +25,37 @@ A comprehensive benchmarking suite comparing popular web frameworks (FastAPI, Dj
 
 ## 🛠️ Setup & Installation
 
+### Prerequisites
+
+- **Docker** (Mandatory)
+  Docker is required for running the benchmarks as all frameworks and databases run in containers.
+  - [Install Docker on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+  - [Install Docker on Windows](https://docs.docker.com/desktop/install/windows-install/)
+  - [Install Docker on macOS](https://docs.docker.com/desktop/install/mac-install/)
+
+### Installation Steps
+
 1. **Clone Repository**
    ```bash
    git clone https://github.com/PrinceDobariya0710/pycon2025-benchmarking.git
    cd pycon2025-benchmarking
    ```
 
-2. **Install UV Package Manager**
+2. **Ubuntu Prerequisites** (Skip for other OS)
+   ```bash
+   # Add user to docker group (avoid using sudo with docker)
+   sudo usermod -aG docker $USER
+   newgrp docker
+   
+   # Verify docker access
+   docker ps
+   
+   # Install required development packages
+   sudo apt update
+   sudo apt install -y libpq-dev python3-dev build-essential
+   ```
+
+3. **Install UV Package Manager**
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```

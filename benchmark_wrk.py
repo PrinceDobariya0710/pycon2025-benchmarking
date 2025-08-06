@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import psycopg2
 import httpx
 from python_on_whales import DockerClient
+import datetime
 
 # Load environment variables
 load_dotenv(".docker.env", override=True)
@@ -26,10 +27,21 @@ DURATION = os.getenv("DURATION_SECONDS", "60")  # 1 minute per test for stable r
 CONCURRENCY = os.getenv("CONCURRENCY", "50")
 THREADS = os.getenv("THREADS", "2")
 DATA_PATH = Path("data/products.csv")
-OUTPUT_PATH = Path("results/benchmark_wrk_results.csv")
+OUTPUT_PATH = Path(
+    f"results/benchmark_wrk_results_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+)
 OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-FRAMEWORK_SERVICES = ["flask", "django", "fastapi", "fastapi-sync", "express", "gin"]
+FRAMEWORK_SERVICES = [
+    "flask",
+    "django",
+    "fastapi-uvicorn-async",
+    "fastapi-uvicorn-sync",
+    "fastapi-gunicorn-async",
+    "fastapi-gunicorn-sync",
+    "express",
+    "gin",
+]
 DB_SERVICE = "db"
 
 # --- TEST CASES ---
@@ -230,7 +242,7 @@ def run_wrk(url, duration, concurrency, threads, lua_script_path=None):
             output_str = str(output).strip()
 
         print("🔍 Raw output type:", type(output_str))
-        print("🔍 Raw output:", output_str[:200] if output_str else "No output")
+        print("🔍 Raw output:", output_str if output_str else "No output")
 
         if not output_str:
             print("⚠️ No output received from wrk")
@@ -305,12 +317,14 @@ def main():
         start_service(service)
 
         framework_name_map = {
-            "fastapi-sync": "fastapi-sync",
             "express": "express",
             "gin": "gin",
             "flask": "flask",
             "django": "django",
-            "fastapi": "fastapi",
+            "fastapi-uvicorn-async": "fastapi-uvicorn-async",
+            "fastapi-uvicorn-sync": "fastapi-uvicorn-sync",
+            "fastapi-gunicorn-async": "fastapi-gunicorn-async",
+            "fastapi-gunicorn-sync": "fastapi-gunicorn-sync",
         }
         framework = framework_name_map.get(service, service.capitalize())
         base_url = FRAMEWORKS.get(framework)

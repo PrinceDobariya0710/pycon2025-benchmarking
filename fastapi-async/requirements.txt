@@ -5,3 +5,4 @@ asyncpg
 ujson
 uvloop
 jinja2
+gunicorn
