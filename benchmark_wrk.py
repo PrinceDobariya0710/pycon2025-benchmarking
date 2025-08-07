@@ -314,6 +314,20 @@ def main():
 
     for service in FRAMEWORK_SERVICES:
         print(f"\n📦 Benchmarking Service: {service}")
+        # Stop everything first for a clean slate
+        stop_and_remove_all_services()
+
+        # Start DB service
+        print("\n=== Starting DB container ===")
+        docker.compose.up(detach=True, services=[DB_SERVICE])
+        print("Waiting for DB to initialize...")
+        time.sleep(10)  # Give DB time to start
+
+        # Seed database once
+        if not seed_database_postgres(products):
+            print("❌ Initial database seeding failed. Aborting benchmarks.")
+            docker.compose.down(remove_orphans=True)
+            return
         start_service(service)
 
         framework_name_map = {
