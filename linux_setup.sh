@@ -73,6 +73,11 @@ print_success "UV sync completed"
 print_status "Finalizing setup..."
 newgrp docker
 
+# Build all docker images
+print_status "Building Docker images..."
+docker compose -f docker-compose.benchmark.yml build
+print_success "Docker images built successfully"
+
 print_success "Setup completed successfully!"
 print_status "Please log out and log back in for group changes to take effect"
 print_status "Then you can run: docker ps to verify docker access"

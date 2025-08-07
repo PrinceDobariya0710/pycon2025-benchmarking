@@ -21,7 +21,7 @@ services:
     depends_on:
       - db
 
-  fastapi-uvicorn:
+  fastapi-uvicorn-async:
     build: ./fastapi-async
     command: "fastapi run main.py --host 0.0.0.0 --port 8003"
     env_file:
@@ -45,7 +45,7 @@ services:
     depends_on:
       - db
 
-  fastapi-gunicorn:
+  fastapi-gunicorn-async:
     build: ./fastapi-async
     command: "gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8003"
     env_file:
