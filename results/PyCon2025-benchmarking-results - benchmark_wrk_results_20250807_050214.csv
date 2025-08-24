@@ -1,0 +1,65 @@
+framework,test,requests_per_sec,avg_latency_ms,total_requests
+flask,PlainText,2248.2,1.69ms,134892
+flask,JSON Echo,2221.79,1.71ms,133307
+flask,Create Product,285.32,13.91ms,17119
+flask,Get Product,651.7,6.04ms,39102
+flask,List Products,268.21,14.81ms,16092
+flask,Update Product,356.13,11.13ms,21367
+flask,Fortune 100,223.39,17.82ms,13403
+flask,Delete Product,523.57,7.53ms,31414
+django,PlainText,1161.13,3.36ms,69667
+django,JSON Echo,1135.35,3.43ms,68121
+django,Create Product,75.78,52.65ms,4546
+django,Get Product,79.93,49.91ms,4795
+django,List Products,1.88,1.07s,112
+django,Update Product,68.85,57.95ms,4131
+django,Fortune 100,36.76,108.59ms,2205
+django,Delete Product,79.91,49.87ms,4794
+fastapi-uvicorn-async,PlainText,1408.9,2.83ms,84534
+fastapi-uvicorn-async,JSON Echo,1396.18,2.86ms,83770
+fastapi-uvicorn-async,Create Product,362.61,11.16ms,21756
+fastapi-uvicorn-async,Get Product,536.26,7.49ms,32175
+fastapi-uvicorn-async,List Products,220.6,18.43ms,13236
+fastapi-uvicorn-async,Update Product,332.21,12.04ms,19932
+fastapi-uvicorn-async,Fortune 100,199.32,20.45ms,11959
+fastapi-uvicorn-async,Delete Product,470.07,8.50ms,28204
+fastapi-uvicorn-sync,PlainText,1056.76,3.78ms,63405
+fastapi-uvicorn-sync,JSON Echo,1037.21,3.85ms,62232
+fastapi-uvicorn-sync,Create Product,292.99,13.64ms,17579
+fastapi-uvicorn-sync,Get Product,398.58,10.03ms,23914
+fastapi-uvicorn-sync,List Products,183.36,22.01ms,11001
+fastapi-uvicorn-sync,Update Product,275.48,14.51ms,16528
+fastapi-uvicorn-sync,Fortune 100,175.75,23.03ms,10545
+fastapi-uvicorn-sync,Delete Product,388.62,10.31ms,23317
+fastapi-gunicorn-async,PlainText,6638.9,595.99us,398334
+fastapi-gunicorn-async,JSON Echo,6328.07,624.22us,379684
+fastapi-gunicorn-async,Create Product,445.52,9.13ms,26731
+fastapi-gunicorn-async,Get Product,788.92,5.11ms,47335
+fastapi-gunicorn-async,List Products,252.01,16.10ms,15120
+fastapi-gunicorn-async,Update Product,417.48,9.62ms,25048
+fastapi-gunicorn-async,Fortune 100,230.41,17.49ms,13824
+fastapi-gunicorn-async,Delete Product,669.67,5.97ms,40180
+fastapi-gunicorn-sync,PlainText,2606.94,1.53ms,156416
+fastapi-gunicorn-sync,JSON Echo,2498.01,1.59ms,149880
+fastapi-gunicorn-sync,Create Product,360.48,11.09ms,21628
+fastapi-gunicorn-sync,Get Product,528.96,7.56ms,31737
+fastapi-gunicorn-sync,List Products,210.37,19.11ms,12622
+fastapi-gunicorn-sync,Update Product,333.27,12.00ms,19996
+fastapi-gunicorn-sync,Fortune 100,202.71,19.86ms,12162
+fastapi-gunicorn-sync,Delete Product,524.09,7.65ms,31445
+express,PlainText,2489.83,1.61ms,149389
+express,JSON Echo,2424.74,1.65ms,145484
+express,Create Product,637.54,6.27ms,38252
+express,Get Product,638.71,6.26ms,38322
+express,List Products,646.65,6.18ms,38799
+express,Update Product,637.94,6.27ms,38276
+express,Fortune 100,627.43,6.37ms,37645
+express,Delete Product,626.93,6.36ms,37615
+gin,PlainText,10331.68,380.13us,619900
+gin,JSON Echo,10143.38,388.53us,608602
+gin,Create Product,1342.97,3.32ms,80578
+gin,Get Product,2409.8,2.69ms,144588
+gin,List Products,1102.1,4.23ms,66126
+gin,Update Product,914.65,4.42ms,54879
+gin,Fortune 100,461.06,8.74ms,27663
+gin,Delete Product,1792.02,2.98ms,107521
